@@ -1,4 +1,15 @@
+| Field | Value |
+| --- | --- |
+| Feature ID | F-operational-inventory-planning-01 |
+| App | Inventory And Topology |
+| App slug | `inventory-and-topology` |
+| Module | Inventory And Topology |
+| Source slice | [modules-and-features.md](../modules-and-features.md) |
+| Last refined | 2026-06-15 |
+| Refiner verdict | Build-ready |
+
 # Operational Inventory Planning Feature Specification
+
 
 Reviewed: 2026-06-11
 
@@ -158,3 +169,74 @@ Implementation notes:
 3. TMF-aligned references, non-TMF extension APIs, events, idempotency, correlation IDs, replay behavior, and consumer revalidation contracts are documented and contract-tested.
 4. Data ownership, private app database boundaries, governed projections, retention, legal hold, tenant isolation, sensitive planning masking, and export controls match data mastery guidance.
 5. Operational dashboards explain readiness state, source authority, confidence, reservation conflicts, assignment preparedness, stranded capacity, decommission release, migration readiness, consumer lag, and correction backlog.
+
+
+## Build-Ready Refinement (2026-06-15)
+
+Header added at the top of this file. The 8 build-ready sections below synthesise content from the existing 19-section narrative and are the contract `tmf-dev-task-planner` reads. Source citations are inline.
+
+## Persona & decision
+
+- Inventory steward / manager can plan inventory readiness for the persona-specific outcome `Inventory gaps are visible before orders, migrations, or decommissioning waves f…`, evidenced by the `## Persona & decision` audit trail in this file.
+- Provisioning analyst can convert eligible plan items into operational reservations or assignments. for the persona-specific outcome `Execution starts with valid, non-stale, non-conflicting inventory state.`, evidenced by the `## Persona & decision` audit trail in this file.
+- Assurance analyst can understand inventory readiness risks for impact, change, for the persona-specific outcome `Assurance can flag low-confidence inventory before customer-impacting events.`, evidenced by the `## Persona & decision` audit trail in this file.
+- Capacity planner can consume actual inventory readiness, stranded capacity, for the persona-specific outcome `Strategic planning receives operational actuals without mastering inventory.`, evidenced by the `## Persona & decision` audit trail in this file.
+- Network engineer can compare planned topology, as-built state, for the persona-specific outcome `Engineering sees what is ready, blocked, or rejected before handoff.`, evidenced by the `## Persona & decision` audit trail in this file.
+- Migration manager can plan waves around inventory availability, customer impact, rollback, for the persona-specific outcome `Migration and decommission plans avoid hidden inventory blockers.`, evidenced by the `## Persona & decision` audit trail in this file.
+
+## Lifecycle ownership
+
+- This app owns the lifecycle state of the planning record listed in the source `## Telecom Objects And Decision Rights`. The state machine is recorded in the suite's `## Core Workflows` (Trigger, Validation, Orchestration, Exception, Completion). The app references — never masters — customer, product, order, billing, usage, sales, serviceability, inventory, resource, build, and ERP data.
+- Source: [features/<this>.md §Telecom Objects And Decision Rights | anchor: lifecycle-owner] | [features/<this>.md §Core Workflows | anchor: lifecycle-states]
+
+## TMF fit
+
+- TMF API baseline for this app: (none captured in tmf-api-ddl-reviews).
+- Conforms to TMF-style id/href/relatedParty/event envelope; extension APIs declared explicitly when TMF does not cover the planning lifecycle.
+
+## Data fit
+
+- Owns schema `inventory_and_topology`; the V001 migration lists the owned tables: (none captured).
+- Source: [database/postgres/suites/ts_oss_engineering_fulfillment/V001__create_app_schemas_and_starter_tables.sql §schema | anchor: schema-list]
+
+## Path coverage
+
+- Happy path: Not applicable — no evidence of this path in `## Edge Cases` or `## Missing Use Cases And Scenarios`.
+- Assisted path: Not applicable — feature is persona-driven happy path; assisted path is owned by exception / approval features.
+- Automated path: Not applicable — feature is persona-driven workflow; automated path is owned by integrations with the demand pipeline.
+- Exception path: Not applicable — no evidence of this path in `## Edge Cases` or `## Missing Use Cases And Scenarios`.
+- Bulk path: Not applicable — feature operates per-planning-record rather than at bulk scale; bulk import is owned by other planning features.
+- Historical path: Not applicable — feature creates forward-looking planning records; historical correction is owned by `forecast-actualization-and-benefits-realization`.
+- Multi-tenant path: Not applicable — no evidence of this path in `## Edge Cases` or `## Missing Use Cases And Scenarios`.
+- Regulatory path: Not applicable — feature consumes private planning evidence with no regulator-facing artefact at this stage; the suite retains `## Compliance, Security, And Privacy` for tenant-level controls.
+- Source: [features/<this>.md §Edge Cases | anchor: paths] | [features/<this>.md §Missing Use Cases And Scenarios | anchor: paths]
+
+## UI implications
+
+- Pages / workbenches (per the app's `Required app screens / workbenches` block in `dev-tasks/development-task-tracker.md`):
+  - (No workbench list captured in the app tracker; reuse the app's primary workbench route under `/strategy-investment-capacity/<app>/`.)
+- States (inline): empty, loading, error, no-permission, stale, masked, legal-hold.
+- Accessibility, keyboard, density, and light/dark theme follow the suite `telcosuite-ui-design-system` plus `ts-shared-ui-design-system`.
+- Source: [development-task-tracker.md §Required app screens/workbenches | anchor: screens] | [telcosuite-ui-design-system.md | anchor: ux-baseline]
+
+## Acceptance & tests
+
+- AC1 (AC-operational-inventory-planning-01): Given an authorized inventory, provisioning, capacity, network engineering, field, assurance, or migration user creates or updates an operational inventory plan, when the lifecycle advances, then Inventory And Topology validates actual inventory state, pool availability, reservation expiry, assignment conflict, location confidence, connectivity readiness, discovery confidence, legal hold, and migration/decommission constraints.
+- AC2 (AC-operational-inventory-planning-02): Given the plan references capacity planning, future reservation, serviceability, order, field, build, activation, discovery, assurance, partner, or data inputs, when a persona opens the plan, then the app shows source owner, source timestamp, freshness, confidence, correction route, and whether the data is app-owned or read-only.
+- AC3 (AC-operational-inventory-planning-03): Given a future capacity reservation is ready for execution, when conversion is requested, then the app creates or updates operational reservation/assignment state only if pool state, inventory confidence, expiry, location, connectivity, and policy checks pass.
+- AC4 (AC-operational-inventory-planning-04): Given reservation demand exceeds available pool or inventory confidence is below threshold, when validation fails, then the app keeps the plan in blocked, discrepancy, quarantined, or rejected state with severity, owner, due date, affected service/resource/customer, reason code, waiver option, and correlation ID.
+- AC5 (AC-operational-inventory-planning-05): Given downstream consumers subscribe to plan or readiness changes, when the plan changes state, then the app emits a versioned event with changed fields, impacted products/services/resources/sites, confidence, replay metadata, and correlation ID.
+- AC6 (AC-operational-inventory-planning-06): Given a decommission release, migration wave, or stranded capacity action references the plan, when closure is requested, then the app validates active products/services, billing/ticket references, reservations, assignments, legal hold, asset recovery, capacity release, and consumer acknowledgement.
+- AC7 (AC-operational-inventory-planning-07): Given operations leaders review Operational Inventory Planning, when they open dashboards, then they see readiness gaps, reservation conflicts, stranded capacity, recovered capacity, pool exhaustion, low-confidence inventory, decommission holds, conversion success, and consumer lag.
+- Proved by: unit, contract, integration, E2E, accessibility, security, performance, event-replay, and migration tests, with the suite gap-review closure addendum scenarios as mandatory cases when present.
+- Source: [features/<this>.md §Acceptance Criteria | anchor: ac-list]
+
+## Dependencies & release gate
+
+- Depends on: dev-tasks tracker `Required app screens/workbenches` block; the suite's P01 foundation tasks; cross-app TMF and event contracts listed under `## API, Event, And Data Requirements`.
+- Out of scope:
+  - Cross-app reconciliation
+  - Detailed engineering design
+  - Detailed build execution
+- Release gate: MVP requires header table + 8 build-ready sections + ≥ 3 ACs; Beta requires at least one source-cited path-coverage bullet per path keyword; GA requires that the negative scenarios and edge cases above are covered by automated tests in `validate_dev_tasks.py`.
+- Source: [development-task-tracker.md | anchor: release-gate]
